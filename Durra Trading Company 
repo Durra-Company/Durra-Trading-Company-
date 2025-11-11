@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Durra Trading Company | مؤسسة درّه التجارية</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <header class="bg-green-700 text-white text-center py-6 shadow relative">
+    <h1 class="text-3xl font-bold mb-2">Durra Trading Company | مؤسسة درّه التجارية</h1>
+    <div class="flex flex-col sm:flex-row justify-center items-center gap-2">
+      <input id="searchBox" type="text" placeholder="🔍 ابحث عن منتج..." class="w-64 px-3 py-2 rounded text-black" oninput="filterProducts()" />
+      <button onclick="toggleCartPopup()" class="bg-white text-green-700 px-4 py-2 rounded shadow font-semibold">🛒 عرض السلة</button>
+    </div>
+  </header>
+
+  <main class="p-6 max-w-6xl mx-auto">
+    <div id="products" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+  </main>
+
+  <footer class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md p-4 flex justify-between items-center">
+    <button onclick="openMap()" class="bg-blue-600 text-white px-4 py-2 rounded-lg">📍 زيارة موقعنا</button>
+    <button onclick="sendToWhatsApp()" class="bg-green-600 text-white px-4 py-2 rounded-lg">📱 إتمام الطلب عبر واتساب</button>
+  </footer>
+
+  <!-- نافذة السلة المنبثقة -->
+  <div id="cartPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-11/12 max-w-md p-4">
+      <h2 class="text-xl font-bold mb-3 text-center text-green-700">🛒 محتويات السلة</h2>
+      <div id="cartItems" class="max-h-64 overflow-y-auto border p-2 rounded"></div>
+      <div id="cartTotal" class="text-right font-semibold mt-3 text-green-700"></div>
+
+      <!-- زر الإرسال عبر واتساب -->
+      <div class="flex justify-center mt-4">
+        <button onclick="sendToWhatsApp()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold text-lg shadow-md hover:bg-green-700 transition">📱 إتمام الطلب الآن عبر واتساب</button>
+      </div>
+
+      <div class="flex justify-between mt-4">
+        <button onclick="clearCart()" class="bg-red-600 text-white px-4 py-2 rounded">🗑️ تفريغ السلة</button>
+        <button onclick="closeCartPopup()" class="bg-gray-400 text-white px-4 py-2 rounded">إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const productsContainer = document.getElementById('products');
+    const searchBox = document.getElementById('searchBox');
+    const cartPopup = document.getElementById('cartPopup');
+    const cartItems = document.getElementById('cartItems');
+    const cartTotal = document.getElementById('cartTotal');
+    const cart = {};
+    const allProducts = [];
+
+    // إنشاء 200 منتج بأسعار عشوائية
+    for (let i = 1; i <= 200; i++) {
+      const price = Math.floor(Math.random() * 46) + 5; // من 5 إلى 50 دولار
+      const product = { name: `منتج ${i}`, price };
+      allProducts.push(product);
+    }
+
+    function displayProducts(products) {
+      productsContainer.innerHTML = '';
+      products.forEach(p => {
+        const productCard = document.createElement('div');
+        productCard.className = 'border rounded-lg p-3 bg-white shadow hover:shadow-lg transition';
+        productCard.innerHTML = `
+          <div class='text-center'>
+            <div class='h-24 flex items-center justify-center text-gray-400 text-sm'>صورة المنتج</div>
+            <h2 class='font-bold text-lg mt-2'>${p.name}</h2>
+            <p class='text-green-600 font-semibold'>${p.price} $</p>
+            <button onclick="addToCart('${p.name}', ${p.price})" class='mt-2 bg-green-600 text-white px-3 py-1 rounded-lg'>إضافة إلى السلة</button>
+          </div>
+        `;
+        productsContainer.appendChild(productCard);
+      });
+    }
+
+    function addToCart(name, price) {
+      if (!cart[name]) cart[name] = { qty: 0, price };
+      cart[name].qty++;
+      updateCartPopup();
+      openCartPopup(); // عرض النافذة تلقائيًا بعد الإضافة
+    }
+
+    function updateCartPopup() {
+      cartItems.innerHTML = '';
+      let total = 0;
+      for (const [name, item] of Object.entries(cart)) {
+        const subtotal = item.price * item.qty;
+        total += subtotal;
+        const div = document.createElement('div');
+        div.className = 'flex justify-between items-center border-b py-1';
+        div.innerHTML = `
+          <span>${name} × ${item.qty}</span>
+          <div class='flex items-center gap-2'>
+            <span>${subtotal} $</span>
+            <button onclick="removeFromCart('${name}')" class='text-red-600 font-bold'>✖</button>
+          </div>
+        `;
+        cartItems.appendChild(div);
+      }
+      cartTotal.textContent = `الإجمالي: ${total} $`;
+    }
+
+    function removeFromCart(name) {
+      delete cart[name];
+      updateCartPopup();
+    }
+
+    function clearCart() {
+      for (const key in cart) delete cart[key];
+      updateCartPopup();
+    }
+
+    function toggleCartPopup() {
+      if (cartPopup.classList.contains('hidden')) {
+        updateCartPopup();
+        cartPopup.classList.remove('hidden');
+      } else {
+        cartPopup.classList.add('hidden');
+      }
+    }
+
+    function openCartPopup() {
+      updateCartPopup();
+      cartPopup.classList.remove('hidden');
+    }
+
+    function closeCartPopup() {
+      cartPopup.classList.add('hidden');
+    }
+
+    function sendToWhatsApp() {
+      if (Object.keys(cart).length === 0) {
+        alert('السلة فارغة');
+        return;
+      }
+      let message = 'طلب جديد من Durra Trading Company%0A';
+      let total = 0;
+      for (const [name, item] of Object.entries(cart)) {
+        const subtotal = item.price * item.qty;
+        total += subtotal;
+        message += `\n${name} × ${item.qty} = ${subtotal} $`;
+      }
+      message += `\n\nالإجمالي: ${total} $`;
+      const phone = '+963998435434';
+      const url = `https://wa.me/${phone}?text=${message}`;
+      window.open(url, '_blank');
+    }
+
+    function openMap() {
+      window.open('https://www.google.com/maps?q=35.364582,36.392415', '_blank');
+    }
+
+    function filterProducts() {
+      const search = searchBox.value.trim();
+      const filtered = allProducts.filter(p => p.name.includes(search));
+      displayProducts(filtered);
+    }
+
+    // عرض جميع المنتجات عند التحميل
+    displayProducts(allProducts);
+  </script>
+</body>
+</html>
